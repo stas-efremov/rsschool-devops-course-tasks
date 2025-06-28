@@ -1,12 +1,27 @@
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg"
-  description = "Allow SSH from anywhere to bastion"
+  description = "Bastion host security group"
   vpc_id      = aws_vpc.main_vpc.id
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow remote kubectl connections"
+  }
+
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -22,7 +37,7 @@ resource "aws_security_group" "bastion_sg" {
 
 resource "aws_security_group" "private_sg" {
   name        = "private-sg"
-  description = "Allow internal traffic and SSH from bastion"
+  description = "Private subnet security group"
   vpc_id      = aws_vpc.main_vpc.id
 
   ingress {
@@ -31,6 +46,13 @@ resource "aws_security_group" "private_sg" {
     protocol    = "tcp"
     self        = true
     description = "Allow all TCP traffic within the SG"
+  }
+
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -66,6 +88,13 @@ resource "aws_security_group" "public_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
