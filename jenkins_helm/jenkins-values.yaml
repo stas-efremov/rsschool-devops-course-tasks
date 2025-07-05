@@ -1,0 +1,69 @@
+persistence:
+  enabled: true
+  storageClass: jenkins-pv
+  size: "5Gi"
+
+serviceAccount:
+  create: false
+  name: jenkins
+  annotations: {}
+
+controller:
+  image:
+    tag: 'lts'
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "256Mi"
+    limits:
+      cpu: "2000m"
+      memory: "4096Mi"
+  serviceEnabled: true
+  serviceType: NodePort
+  servicePort: 8080
+  targetPort: 8080
+  nodePort: 30080
+  installPlugins:
+    - kubernetes:latest
+    - kubernetes-credentials:latest
+    - workflow-aggregator:latest
+    - workflow-job:latest
+    - git:latest
+    - configuration-as-code:latest
+    - credentials-binding:latest
+    - configuration-as-code-groovy:latest
+  JCasC:
+    enabled: true
+    logging:
+      io.jenkins.plugins.casc: DEBUG
+    configScripts:
+      initial-jcasc-config: |
+        jenkins:
+          systemMessage: "JCasC Configured using execute-groovy-script!"
+
+        execute-groovy-script:
+          script: |
+            import hudson.model.FreeStyleProject
+            import hudson.model.Jenkins
+            import hudson.tasks.Shell
+            import hudson.model.InitMilestone
+
+            def jobName = "hello-world-freestyle-job"
+            def jenkins = Jenkins.instance
+
+            while (jenkins.getInitLevel().ordinal < InitMilestone.COMPLETED.ordinal) {
+                Thread.sleep(1000)
+            }
+
+            def job = jenkins.getItem(jobName)
+            
+            if (job == null) {
+                job = jenkins.createProject(FreeStyleProject, jobName)
+            } else if (!(job instanceof FreeStyleProject)) {
+                return
+            }
+
+            job.getBuildersList().clear()
+            job.getBuildersList().add(new Shell("echo 'Hello World'"))
+            job.save()

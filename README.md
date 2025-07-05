@@ -56,3 +56,51 @@ To destroy everything:
 4. **Optional. Run sample workload in the cluster**
    - Run "kubectl apply -f https://k8s.io/examples/pods/simple-pod.yaml" to deploy a sample nginx pod in the cluster
    - Verify nginx pod is running: kubectl get pods
+
+
+## Setup Jenkins using Helm on Minikube
+CD to jenkins_helm subdirectory
+1. **Install Minikube: https://minikube.sigs.k8s.io/docs/start**
+   Start minikube:
+   minikube start
+   Make services available outside cluster:
+   minikube tunnel
+
+2. **Install Helm: https://helm.sh/docs/intro/install/**
+   Check Helm on Minikube:
+   helm install my-nginx oci://registry-1.docker.io/bitnamicharts/nginx
+   helm list
+   helm uninstall my-nginx
+
+3. **Once Helm is installed and set up properly, add the Jenkins repo as follows:**
+   helm repo add jenkinsci https://charts.jenkins.io
+   helm repo update
+
+   The helm charts in the Jenkins repo can be listed with the command:
+   helm search repo jenkinsci
+   
+4. **Create namespace for jenkins:**
+   kubectl apply -f jenkins-ns.yaml
+
+5. **CCreate a volume which is called jenkins-pv:**
+   kubectl apply -f jenkins-volume.yaml
+
+   Minikube configured for hostPath sets the permissions on /data to the root account only. Once the volume is created you will need to manually change the permissions to allow the jenkins account to write its data.
+   minikube ssh
+   sudo chown -R 1000:1000 /data/jenkins-volume
+
+6. **Create a service account called jenkins:**
+   kubectl apply -f jenkins-sa.yaml
+
+7. **Modify jenkins-values.yaml file to adjust jenkins helm values as per needs**
+
+8. **Install Jenkins Helm chart with adjusted values:**
+   helm install jenkins -n jenkins -f jenkins-values.yaml jenkinsci/jenkins
+
+9. **Get Jenkins admin password:**
+   kubectl exec --namespace jenkins -it svc/jenkins -c jenkins -- /bin/cat /run/secrets/additional/chart-admin-password
+
+10. **Access Jenkins web interface to configure and check pre-configured job:**
+   http://<NodeIP>:30080
+
+
