@@ -104,3 +104,20 @@ CD to jenkins_helm subdirectory
    http://<NodeIP>:30080
 
 
+## Simple Flask Application Deployment with Helm chart on Minikube
+CD to helm subdirectory
+- "flask_app" folder contains the sample Flask application
+- "flask_app_helm_chart" folder contains a custom helm chart to run flask application(or other applications)
+1. **Edit helm chart values**
+   Edit values in the flask-app-values.yaml file as per needs.
+   The values which may need to be usually adjusted: 
+      appName - visible name of the application;
+      appImage - uri of the image in the container registry;
+      appVersion - application version(normally the tag of the image in the registry)
+
+2. **Install Helm chart using provided values file**
+   helm install -f flask-app-values.yaml hello-world-flask flask_app_helm_chart
+
+3. **(Optional)Uninstall Helm chart**
+   helm uninstall hello-world-flask
+
